@@ -40,19 +40,20 @@ def create():
         # TODO: Get the new plant's name, variety, photo, & date planted, and 
         # store them in the object below.
         new_plant = {
-            'name': '',
-            'variety': '',
-            'photo_url': '',
-            'date_planted': ''
+            'name': request.form.get('plant_name'),
+            'variety': request.form.get('variety'),
+            'photo_url': request.form.get('photo'),
+            'date_planted': request.form.get('date_planted')
         }
         # TODO: Make an `insert_one` database call to insert the object into the
         # database's `plants` collection, and get its inserted id. Pass the 
         # inserted id into the redirect call below.
-
-        return redirect(url_for('detail', plant_id=''))
+        plant_insert = mongo.db.plant.insert_one(new_plant).inserted_id
+        return redirect(url_for('detail', plant_id=plant_insert))
 
     else:
         return render_template('create.html')
+
 
 @app.route('/plant/<plant_id>')
 def detail(plant_id):
