@@ -43,7 +43,6 @@ def create():
         }
         plant_insert = mongo.db.plants.insert_one(new_plant).inserted_id
         return redirect(url_for('detail', plant_id=plant_insert))
-
     else:
         return render_template('create.html')
 
@@ -91,20 +90,27 @@ def harvest(plant_id):
 def edit(plant_id):
     """Shows the edit page and accepts a POST request with edited data."""
     if request.method == 'POST':
-        # TODO: Make an `update_one` database call to update the plant with the
-        # given id. Make sure to put the updated fields in the `$set` object.
-
+        # Retrieve updated plant data from the form
+        updated_plant = {
+            'name': request.form.get('plant_name'),
+            'variety': request.form.get('variety'),
+            'photo_url': request.form.get('photo'),
+            'date_planted': request.form.get('date_planted')
+        }
+        # Update the plant in the database
+        mongo.db.plants.update_one(
+            { '_id': ObjectId(plant_id) },
+            { '$set': updated_plant }
+            )
         
         return redirect(url_for('detail', plant_id=plant_id))
     else:
-        # TODO: Make a `find_one` database call to get the plant object with the
-        # passed-in _id.
-        plant_to_show = ''
+        # Retrieve the plant to edit
+        plant_to_show = mongo.db.plants.find_one({'_id': ObjectId(plant_id)})
 
         context = {
             'plant': plant_to_show
         }
-
         return render_template('edit.html', **context)
 
 @app.route('/delete/<plant_id>', methods=['POST'])
