@@ -1,28 +1,16 @@
 {% extends 'base.html' %}
 {% block content %}
 
-
-{#
-    TODO: Much of the data on this page is hard-coded! Replace the name, photo,
-    variety, date planted, & id with the plant object's actual data, using what
-    is passed from the route's context. 
-    
-    HINT: For example, you can use `plant.name` or `plant['name']` for the
-    plant's name.
-#}
-
 <main>
         <h1>{{ plant['name']}}</h1>
 
         <img src="{{ plant['photo_url'] }}" alt="Photo of {{ plant['name'] }}">
 
-        
-
         <section id="info">
             <h3>Info</h3>
 
             <strong>Date Planted</strong>
-            {{ plant['date_planted'].strftime('%Y=%m-%d') if plant['date_planted'] else 'Unknown' }}
+            {{ plant['date_planted'] if plant['date_planted'] else 'Unknown' }}
             <br><br>
 
             <strong>Variety</strong>
@@ -43,27 +31,31 @@
 
                 <label>
                     Date harvested
-                    <input type="date" name="date_planted">
+                    <input type="date" name="date_harvested">
                 </label>
 
                 <input type="submit" class="submit" value="Harvest!">
             </fieldset>
         </form>
 
-        {#
-            TODO: Create a for loop here to loop over all harvests (passed in 
-            from the route's context) and display their information.
-        #}
+
         <section id="harvest-history">
             <h3>Harvest History</h3>
-
+            {% if harvests %}
             <ul>
-                <li>5/15/2020: Harvested 3 tomatoes</li>
-                <li>5/18/2020: Harvested 2 tomatoes</li>
+                {% for harvest in harvests %}
+                    <li>
+                        {{ harvest['date'].strftime('%Y-%m-%d') if harvest['date'] else 'Unknown Date' }}:
+                        Harvested {{ harvest['quantity'] }}
+                    </li>
+                {% endfor %}
             </ul>
+            {% else %}
+                <p>No harvests recorded yet.</p>
+            {% endif %}
         </section>
 
-        <form action="/delete/123456" method='POST' id="delete-form" onsubmit="return confirm_delete()">
+        <form action="/delete/{{ plant['_id'] }}" method='POST' id="delete-form" onsubmit="return confirm_delete()">
             <input type="submit" class="nav" onclick="delete_modal()" value="Delete Plant">
         </form>
 </main>

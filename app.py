@@ -1,6 +1,7 @@
 from flask import Flask, request, redirect, render_template, url_for
 from flask_pymongo import PyMongo
 from bson.objectid import ObjectId
+from datetime import datetime
 
 ############################################################
 # SETUP
@@ -18,9 +19,6 @@ mongo = PyMongo(app)
 @app.route('/')
 def plants_list():
     """Display the plants list page."""
-
-    # TODO: Replace the following line with a database call to retrieve *all*
-    # plants from the Mongo database's `plants` collection.
     plants_data = list(mongo.db.plant.find())
 
     context = {
@@ -37,18 +35,13 @@ def about():
 def create():
     """Display the plant creation page & process data from the creation form."""
     if request.method == 'POST':
-        # TODO: Get the new plant's name, variety, photo, & date planted, and 
-        # store them in the object below.
         new_plant = {
             'name': request.form.get('plant_name'),
             'variety': request.form.get('variety'),
             'photo_url': request.form.get('photo'),
             'date_planted': request.form.get('date_planted')
         }
-        # TODO: Make an `insert_one` database call to insert the object into the
-        # database's `plants` collection, and get its inserted id. Pass the 
-        # inserted id into the redirect call below.
-        plant_insert = mongo.db.plant.insert_one(new_plant).inserted_id
+        plant_insert = mongo.db.plants.insert_one(new_plant).inserted_id
         return redirect(url_for('detail', plant_id=plant_insert))
 
     else:
@@ -61,7 +54,7 @@ def detail(plant_id):
     # Fetch the plant with the given 'plant_id' from the 'plants' collection
     plant_to_show = mongo.db.plants.find_one({'_id': ObjectId(plant_id)})
     # Fetch all harvests associated with the plant's id from the harvest's collection
-    harvests = mongo.db.harvests.find_one(plant_id)
+    harvests = list(mongo.db.harvests.find({'plant_id': ObjectId(plant_id)}))
 
     context = {
         'plant' : plant_to_show,
@@ -74,18 +67,24 @@ def harvest(plant_id):
     """
     Accepts a POST request with data for 1 harvest and inserts into database.
     """
+    # Create a new harvest object using data from the form
+    harvested_amount = request.form.get('harvested_amount')
+    date_harvested = request.form.get('date_harvested')
 
-    # TODO: Create a new harvest object by passing in the form data from the
-    # detail page form.
+    # Convert date_harvested to a datetime object
+    date_harvested = (
+        datetime.strptime(date_harvested, '%Y-%m-%d')
+        if date_harvested else None
+    )
+
     new_harvest = {
-        'quantity': '', # e.g. '3 tomatoes'
-        'date': '',
-        'plant_id': plant_id
+        'quantity': harvested_amount,
+        'date': date_harvested,
+        'plant_id': ObjectId(plant_id)
     }
 
-    # TODO: Make an `insert_one` database call to insert the object into the 
-    # `harvests` collection of the database.
-
+    # Insert the new harvest into the 'harvests' collection
+    mongo.db.harvests.insert_one(new_harvest)
     return redirect(url_for('detail', plant_id=plant_id))
 
 @app.route('/edit/<plant_id>', methods=['GET', 'POST'])
